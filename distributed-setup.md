@@ -1,7 +1,7 @@
 # Overview
 This document provides a quick walkthrough of using the DC/OS community edition advanced installer to stand up a basic DC/OS cluster on a set of CentOS 7.3 boxes (built using the 1611 minimal ISO).
 
-This document isn't meant to be used to build a production-ready stack (it's missing a lot of the security configurations, etc.).  Rather, this is a quick-start guide to stand up a basic DC/OS cluster with distributed masters; it's meant to familiarize new users with the installation method in general.
+This document isn't meant to be used to build a production-ready stack (it's missing a lot of the security configurations, etc.).  Rather, this is a quick-start guide to stand up a basic DC/OS cluster with distributed masters; it's meant to familiarize new users with the installation method in general, using a common environment.
 
 ---
 
@@ -198,7 +198,6 @@ On each master:
 - Download the `dcos_install.sh` script from the bootstrap node
 - Run the `dcos_install.sh` script with the `master` option
 
-
 On each Agent:
 - Create workspace directory
 - Download the `dcos_install.sh` script from the bootstrap node
@@ -219,6 +218,7 @@ On each Public Agent:
 
 ## Set up the bootstrap node:
 
+#### Create the workspace directory
 Create a workspace directory on your bootstrap node, and cd to it (I'm using 190 to refer to DC/OS version 1.9.0; you can use whatever directory you want):
 
 ```bash
@@ -226,17 +226,21 @@ mkdir 190
 cd 190
 ```
 
-In the dcos_190 directory, download the installer (or use some mechanism such as scp to get it over to the bootstrap node and put it in dcos_190):
+#### Download the bootstrap script (dcos_generate-config.sh) to the workspace
+In the dcos_190 directory, download the bootstrap script (or use some mechanism such as scp to get it over to the bootstrap node and put it in dcos_190):
 
 ```bash
 curl -LO https://downloads.dcos.io/dcos/stable/commit/0ce03387884523f02624d3fb56c7fbe2e06e181b/dcos_generate_config.sh
 ```
 
-Create the genconf directory within the 190 directory
+#### Create the genconf directory (with your workspace directory)
+Create the genconf directory within the 190 directory 
 
 ```bash
 mkdir genconf
 ```
+
+#### Create the genconf/ip-detect file
 
 Use vi to create a genconf/ip-detect file.  This is used to self-identify the IP address that will be used for internal communication between nodes.  When run, it should output an IP address that is reachable from all nodes within the cluster (this is also used as the 'hostname' for the DC/OS UI.  Examples of ip-detect files for different environments are available here: https://dcos.io/docs/1.8/administration/installing/custom/advanced/
 
@@ -253,6 +257,11 @@ hostname -I | awk '{print $1}'
 
 Use vi to create a genconf/config.yaml.  Make sure that the bootstrap URL matches the output of ip-detect when run from the bootstrap node, and make sure the master IPs match the outputs of ip-detect run on your mater nodes.
 
+#### Create the genconf/config.yaml file
+Create a yaml file that contains all the configurations used to build DC/OS.  Make sure to update the `bootstrap_url` with the IP address of your bootstrap node (whatever is returned via ip-detect) and `master_list` with the IP addresses of your master nodes (again, output of ip-detect).
+
+*You must have an odd number of masters.*
+
 > vi genconf/config.yaml
 
 ```yml
@@ -261,6 +270,7 @@ bootstrap_url: http://172.16.125.20
 cluster_name: 'dcos-oss'
 exhibitor_storage_backend: static
 master_discovery: static
+oauth_enabled: 'false'
 master_list:
  - 172.16.125.21
  - 172.16.125.22
@@ -269,6 +279,203 @@ resolvers:
 - 8.8.4.4
 ```
 
+---
 
+*This is the bare minimum config.yaml.  Additional configuration options are documented here: https://dcos.io/docs/1.8/administration/installing/custom/configuration-parameters/*
+
+---
+
+Here's an annotated description of the configuration settings used in the above example:
+
+```yml
+---
+### Identifies the URL used by pkgpanda from which to pull packages.  This must be reachable from each of the nodes.
+bootstrap_url: http://172.16.125.20
+
+### The name used by the cluster.  This can be anything.
+cluster_name: 'dcos-oss'
+
+### This indicates that we will use internal (static) zookeeper, hosted on each master node, for configuration management.  Exhibitor is the manager for zookeeper
+exhibitor_storage_backend: static
+
+### This indicates that each of the agents will use the IPs in the master_list (provided below) to reach the masters.
+master_discovery: static
+
+### This disables OAuth 2.0.  Not necessary, but useful for a first stack (OAuth 2.0 by default uses Google/Github/Microsoft requires internet access)
+oauth_enabled: 'false'
+
+### This is a list of your masters (used by agents to talk to the masters, and for masters to speak with each other).  You must have an odd number of masters, and all masters must be up and installed for initial cluster operation.
+master_list:
+ - 172.16.125.21
+ - 172.16.125.22
+ - 172.16.125.23
+
+### This is the list of DNS resolvers used by the cluster (this is integrated the configuratoin for DC/OS's internal DNS server, Spartan)
+resolvers:
+- 8.8.4.4
+```
+
+
+
+This should be your directory structure now:
+- <190>/dcos_generate_config.sh
+- <190>/genconf/ip-detect
+- <190>/genconf/config.yaml
+
+```
+[admin@localhost 190]$ ls -alh *
+-rw-rw-r--. 1 admin admin 829830566 Jun 16 14:38 dcos_generate_config.sh
+
+genconf:
+total 8
+-rw-rw-r--. 1 admin admin   209 Jun 16 15:38 config.yaml
+-rwxrwxr-x. 1 admin admin    50 Jun 16 15:30 ip-detect
+```
+
+#### Run the bootstrap script (dcos_generate-config.sh):
+Run the dcos_generate_config.sh script (with sudo).  This will generate a bunch of content and put it in `<190>/genconf/serve`.  This will basically serve as your http and pkgpanda repository.
+
+```bash
+sudo bash dcos_generate_config.sh
+```
+
+You can do an `ls` on this directory to see the contents that are served:
+
+```
+[admin@localhost 190]$ ls -alh genconf/serve
+total 40K
+drwxrwxrwx.  4 root  root   119 Jun 16 15:39 .
+drwxrwxr-x.  4 admin admin   97 Jun 16 15:39 ..
+drwxrwxrwx.  2 root  root   131 Jun 16 15:39 bootstrap
+-rw-rw-rw-.  1 root  root    40 Jun 16 15:39 bootstrap.latest
+-rw-rw-rw-.  1 root  root   12K Jun 16 15:39 cluster-package-info.json
+-rw-rw-rw-.  1 root  root   19K Jun 16 15:39 dcos_install.sh
+drwxrwxrwx. 67 root  root  4.0K Jun 16 15:39 packages
+```
+
+#### Start nginx to host the repo and artifacts
+
+Start nginx to actually host the artifacts so that your nodes can download and install from the bootstrap:
+
+```
+sudo docker run -d -p 80:80 --name bootstrap-190 -v $PWD/genconf/serve:/usr/share/nginx.html:ro nginx
+```
+
+Now, if you curl the bootstrap URL with a path of /cluster-package-info.json, you should get a JSON file that lists all of the packages that make up DC/OS:
+
+```
+$ curl http://172.16.125.20/cluster-package-info.json
+{
+  "3dt":{
+    "filename":"packages/3dt/3dt--7847ebb24bf6756c3103902971b34c3f09c3afbd.tar.xz",
+    "id":"3dt--7847ebb24bf6756c3103902971b34c3f09c3afbd"
+  },
+  ...
+    "toybox":{
+    "filename":"packages/toybox/toybox--f235594ab8ea9a2864ee72abe86723d76f92e848.tar.xz",
+    "id":"toybox--f235594ab8ea9a2864ee72abe86723d76f92e848"
+  }
+}
+```
+
+## Install DC/OS on each of your master nodes.
+
+For each master node, follow this process:
+
+SSH in to the master node
+
+Make a workspace directory
+
+```
+mkdir -p /tmp/dcos/190 && cd /tmp/dcos/190
+```
+
+Download the installer script from the boostrap node (replace IP with your bootstrap node IP):
+```
+curl -LO http://172.16.125.20/dcos_install.sh
+```
+
+Run the script with the 'master' flag (using sudo):
+```
+sudo bash dcos_install.sh master
+```
+
+If you see any errors here, you've probably missed a prerequisite.
+
+---
+*If you have multiple masters, the cluster will not converge (and the UI will not work) until you've run this on all of your masters.*
+---
+
+This installation may take several minutes (even after the script has exited).  After the script has exited, you can monitor progress with the following:
+
+Use this command to follow the dcos-setup systemd unit (when it hits 'Started Pkgpanda...' then this step is complete) (ctrl-c to exit):
+```
+sudo journalctl -f -u dcos-setup
+```
+
+Watch cluster convergence at http://<master-ip>:8181:  (will not converge unless the installation process has been completed on all masters)(ctrl-c to exit):
+
+```
+sudo journalctl -f -u dcos-exhibitor
+```
+
+Watch process convergence with this watch command:  (when all units say `loaded` and `active`, you should be good to go)(ctrl-c to exit):
+
+```
+watch 'systemctl list-units dcos-*'
+```
+
+## Install DC/OS on each of your private agent nodes.
+
+For each master node, follow this process:
+
+SSH in to the master node
+
+Make a workspace directory
+
+```
+mkdir -p /tmp/dcos/190 && cd /tmp/dcos/190
+```
+
+Download the installer script from the boostrap node (replace IP with your bootstrap node IP):
+```
+curl -LO http://172.16.125.20/dcos_install.sh
+```
+
+Run the script with the 'master' flag (using sudo):
+```
+sudo bash dcos_install.sh slave
+```
+
+This may take several minutes to complete.  You can do this for all of your agents at the same time (from different shell sessions).
+
+
+## Install DC/OS on each of your public agent nodes.
+
+For each master node, follow this process:
+
+SSH in to the master node
+
+Make a workspace directory
+
+```
+mkdir -p /tmp/dcos/190 && cd /tmp/dcos/190
+```
+
+Download the installer script from the boostrap node (replace IP with your bootstrap node IP):
+```
+curl -LO http://172.16.125.20/dcos_install.sh
+```
+
+Run the script with the 'master' flag (using sudo):
+```
+sudo bash dcos_install.sh slave_public
+```
+
+This may take several minutes to complete.  You can do this for all of your agents at the same time (from different shell sessions).
+
+# Success!
+
+Once all of the systemd units on your masters are fully loaded:active, you should be able to log in to the DC/OS UI.  Navigate to http://<ip address>
 
 <!--- # Todo: Add '>' style commands for better markdown output. --->
