@@ -257,12 +257,14 @@ Use vi to create a genconf/config.yaml.  Make sure that the bootstrap URL matche
 
 ```yml
 ---
-bootstrap_url: http://10.10.0.69
+bootstrap_url: http://172.16.125.20
 cluster_name: 'dcos-oss'
 exhibitor_storage_backend: static
 master_discovery: static
 master_list:
- - 10.10.0.201
+ - 172.16.125.21
+ - 172.16.125.22
+ - 172.16.125.23
 resolvers:
 - 8.8.4.4
 ```
