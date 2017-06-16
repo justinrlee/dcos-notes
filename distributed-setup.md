@@ -17,19 +17,19 @@ SSH access, with sudo permissions (using linux user 'admin' with sudo access)
 ## Architecture:
 This walkthrough details the deployment of a 3-master cluster, with one public agent and one private agent.  For the purposes of this walkthrough, these are the IP addresses used:
 
-Bootstrap node: 
-172.16.125.20
+Bootstrap node:
+* 172.16.125.20
 
 Master nodes:
-172.16.125.21
-172.16.125.22
-172.16.125.23
+* 172.16.125.21
+* 172.16.125.22
+* 172.16.125.23
 
 Public Agent node:
-172.16.125.25
+* 172.16.125.25
 
 Private Agent node:
-172.16.125.26
+* 172.16.125.26
 
 ---
 
