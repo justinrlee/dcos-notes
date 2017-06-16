@@ -403,7 +403,9 @@ sudo bash dcos_install.sh master
 If you see any errors here, you've probably missed a prerequisite.
 
 ---
+
 *If you have multiple masters, the cluster will not converge (and the UI will not work) until you've run this on all of your masters.*
+
 ---
 
 This installation may take several minutes (even after the script has exited).  After the script has exited, you can monitor progress with the following:
