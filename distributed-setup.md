@@ -5,7 +5,7 @@ This document isn't meant to be used to build a production-ready stack (it's mis
 
 ---
 
-*Hint: I prefer the advanced installation method.  In my opinion, it's much easier to set up, use, and troubleshoot.*
+I prefer the advanced installation method.  In my opinion, it's much easier to set up, use, and troubleshoot.*
 
 ---
 
@@ -95,7 +95,7 @@ sudo init 6
 
 ---
 
-*Hint: once the systems have finished rebooting, you can verify that the above two steps were successful by running `getenforce` and `lsmod | grep overlay`*
+Once the systems have finished rebooting, you can verify that the above two steps were successful by running `getenforce` and `lsmod | grep overlay`*
 
 ---
 
@@ -145,4 +145,20 @@ sudo yum install -y docker-engine-1.13.1
 
 sudo systemctl enable docker
 sudo systemctl start docker
+```
+
+
+---
+
+*Once the systems have finished rebooting, you can verify docker is running with overlay by running `sudo docker info | grep Storage`*
+
+---
+
+## Other requirements
+
+DC/OS also has a couple other small requirements: you must install `ipset` and `unzip` and you must add the linux group `nogroup`.
+
+```bash
+sudo yum install -y unzip ipset
+sudo groupadd nogroup
 ```
