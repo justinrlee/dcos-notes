@@ -154,7 +154,7 @@ sudo systemctl start docker
 
 ---
 
-## Other requirements
+## Other requirements (all nodes)
 
 DC/OS also has a couple other small requirements: you must install `ipset` and `unzip` and you must add the linux group `nogroup`.
 
