@@ -24,7 +24,9 @@ Private Agent node:
 172.16.125.26
 
 ---
+
 *Hint* DC/OS requires an odd number of masters.
+
 ---
 
 ## Setup of prerequisites.
