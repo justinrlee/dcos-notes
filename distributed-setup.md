@@ -1,11 +1,11 @@
 # Overview
 This document provides a quick walkthrough of using the DC/OS community edition advanced installer to stand up a basic DC/OS cluster on a set of CentOS 7.3 boxes (built using the 1611 minimal ISO).
 
-This document isn't meant to be used to build a production-ready stack (it's missing a lot of the security configurations, etc.).  Rather, this is a quick-start guide to stand up a basic DC/OS cluster with distributed masters.
+This document isn't meant to be used to build a production-ready stack (it's missing a lot of the security configurations, etc.).  Rather, this is a quick-start guide to stand up a basic DC/OS cluster with distributed masters; it's meant to familiarize new users with the installation method in general.
 
 ---
 
-I prefer the advanced installation method.  In my opinion, it's much easier to set up, use, and troubleshoot.*
+*I prefer the advanced installation method.  In my opinion, it's much easier to set up, use, and troubleshoot.*
 
 ---
 
@@ -62,6 +62,16 @@ Update interval : 516.8 seconds
 Leap status     : Normal
 ```
 
+## Disable the firewall (all nodes)
+
+Disable the firewall on all nodes:
+
+```bash
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+```
+
+
 ## Enable the overlay kernel module (all nodes)
 
 DC/OS requires the use of the overlay linux kernel module.  It can be enabled by running this command, which will create the overlay configuration file at /etc/modules-load.d/overlay.conf:
@@ -95,7 +105,7 @@ sudo init 6
 
 ---
 
-Once the systems have finished rebooting, you can verify that the above two steps were successful by running `getenforce` and `lsmod | grep overlay`*
+*Once the systems have finished rebooting, you can verify that the above two steps were successful by running `getenforce` and `lsmod | grep overlay`*
 
 ---
 
@@ -174,6 +184,88 @@ sudo groupadd nogroup
 
 Now that all of the requirements are set up, the basic installation process for DC/OS is as follows:
 
+Set up the bootstrap node
+- Create a workspace directory on your bootstrap node
+- Download the installer to your bootstrap node
+- Create the `genconf` directory in your workspace
+- Populate your `genconf/ip-detect` file
+- Populate your `genconf/config.yaml` file
+- Generate the configuration generation script
+- Host the `genconf/serve` directory via nginx
+
+On each master:
+- Create workspace directory
+- Download the `dcos_install.sh` script from the bootstrap node
+- Run the `dcos_install.sh` script with the `master` option
+
+
+On each Agent:
+- Create workspace directory
+- Download the `dcos_install.sh` script from the bootstrap node
+- Run the `dcos_install.sh` script with the `slave` option
+
+On each Public Agent:
+- Create workspace directory
+- Download the `dcos_install.sh` script from the bootstrap node
+- Run the `dcos_install.sh` script with the `slave_public` option
+
+---
+
+*DC/OS uses the `pkgpanda` package manager, instead of yum or apt or some other package management tool, in order to be fully cross-platform compliant.  The above process basically turns your bootstrap node into a pkgpanda repository (hosted over http on nginx)*
+
+*The installation script is then downloaded to each node, and run from each node.  The installation script essentially runs a bunch of pkgpanda download and installs to install of the DC/OS components*
+
+---
+
+## Set up the bootstrap node:
+
+Create a workspace directory on your bootstrap node, and cd to it (I'm using 190 to refer to DC/OS version 1.9.0; you can use whatever directory you want):
+
+```bash
+mkdir 190
+cd 190
+```
+
+In the dcos_190 directory, download the installer (or use some mechanism such as scp to get it over to the bootstrap node and put it in dcos_190):
+
+```bash
+curl -LO https://downloads.dcos.io/dcos/stable/commit/0ce03387884523f02624d3fb56c7fbe2e06e181b/dcos_generate_config.sh
+```
+
+Create the genconf directory within the 190 directory
+
+```bash
+mkdir genconf
+```
+
+Use vi to create a genconf/ip-detect file.  This is used to self-identify the IP address that will be used for internal communication between nodes.  When run, it should output an IP address that is reachable from all nodes within the cluster (this is also used as the 'hostname' for the DC/OS UI.  Examples of ip-detect files for different environments are available here: https://dcos.io/docs/1.8/administration/installing/custom/advanced/
+
+For the purposes of this document, I'm using a very simple ip-detect file that, when run, outputs the first ip address.  This may or may not be suitable for your environment (for example, in some environments, depending on the shell, this will return a different IP address, which will cause issues).
+
+This script is copied to each node in your cluster, so it should work on all cluster nodes.
+
+> vi genconf/ip-detect
+
+```
+#!/bin/sh
+hostname -I | awk '{print $1}'
+```
+
+Use vi to create a genconf/config.yaml.  Make sure that the bootstrap URL matches the output of ip-detect when run from the bootstrap node, and make sure the master IPs match the outputs of ip-detect run on your mater nodes.
+
+> vi genconf/config.yaml
+
+```yml
+---
+bootstrap_url: http://10.10.0.69
+cluster_name: 'dcos-oss'
+exhibitor_storage_backend: static
+master_discovery: static
+master_list:
+ - 10.10.0.201
+resolvers:
+- 8.8.4.4
+```
 
 
 
