@@ -158,7 +158,14 @@ sudo systemctl start docker
 
 DC/OS also has a couple other small requirements: you must install `ipset` and `unzip` and you must add the linux group `nogroup`.
 
+Install `unzip` and `ipset`:
+
 ```bash
 sudo yum install -y unzip ipset
+```
+
+Create the group `nogroup`:
+
+```bash
 sudo groupadd nogroup
 ```
