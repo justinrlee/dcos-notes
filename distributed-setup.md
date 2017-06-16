@@ -478,6 +478,6 @@ This may take several minutes to complete.  You can do this for all of your agen
 
 # Success!
 
-Once all of the systemd units on your masters are fully loaded:active, you should be able to log in to the DC/OS UI.  Navigate to http://<ip address>
+Once all of the systemd units on your masters are fully loaded:active, you should be able to log in to the DC/OS UI.  Navigate to http://master-ip/ and you should get the DC/OS UI.
 
 <!--- # Todo: Add '>' style commands for better markdown output. --->
