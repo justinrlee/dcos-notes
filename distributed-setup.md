@@ -169,3 +169,12 @@ Create the group `nogroup`:
 ```bash
 sudo groupadd nogroup
 ```
+
+# Install DC/OS
+
+Now that all of the requirements are set up, the basic installation process for DC/OS is as follows:
+
+
+
+
+[//]: # Todo: Add '>' style commands for better markdown output. 
