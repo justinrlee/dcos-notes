@@ -285,7 +285,7 @@ resolvers:
 
 ---
 
-An annotated version of the config.yaml can be found [here](config.yaml.md):
+An annotated version of the config.yaml can be found on a separate page [here](config.yaml.md).
 
 
 This should be your directory structure now:
