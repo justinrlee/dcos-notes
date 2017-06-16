@@ -10,9 +10,9 @@ This document isn't meant to be used to build a production-ready stack (it's mis
 ---
 
 Requirements: 6 systems, all configured as follows:
-CentOS 7.3 (CentOS-7-x86_64-Minimal-1611.iso)
-Static IP addresses
-SSH access, with sudo permissions (using linux user 'admin' with sudo access)
+* CentOS 7.3 (CentOS-7-x86_64-Minimal-1611.iso)
+* Static IP addresses
+* SSH access, with sudo permissions (using linux user 'admin' with sudo access)
 
 ## Architecture:
 This walkthrough details the deployment of a 3-master cluster, with one public agent and one private agent.  For the purposes of this walkthrough, these are the IP addresses used:
