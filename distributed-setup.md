@@ -117,7 +117,7 @@ While Docker images can be run on DC/OS using the Universal Container Runtime (U
 This is a three step process:
 - Configure CentOS with the Docker yum repo
 - Configure Docker to use OverlayFS (basically, we're configuring a systemd override file before Docker is first installed and started
-- Install and the Docker engine
+- Install and start the Docker engine
 
 1. Set up the Docker yum repo:
 
@@ -400,7 +400,7 @@ watch 'systemctl list-units dcos-*'
 
 ## Install DC/OS on each of your private agent nodes.
 
-For each master node, follow this process:
+For each private agent node, follow this process:
 
 SSH in to the master node
 
@@ -415,7 +415,7 @@ Download the installer script from the boostrap node (replace IP with your boots
 curl -LO http://172.16.125.20/dcos_install.sh
 ```
 
-Run the script with the 'master' flag (using sudo):
+Run the script with the 'slave' flag (using sudo):
 ```
 sudo bash dcos_install.sh slave
 ```
@@ -425,7 +425,7 @@ This may take several minutes to complete.  You can do this for all of your agen
 
 ## Install DC/OS on each of your public agent nodes.
 
-For each master node, follow this process:
+For each public agent node, follow this process:
 
 SSH in to the master node
 
@@ -440,7 +440,7 @@ Download the installer script from the boostrap node (replace IP with your boots
 curl -LO http://172.16.125.20/dcos_install.sh
 ```
 
-Run the script with the 'master' flag (using sudo):
+Run the script with the 'slave_public' flag (using sudo):
 ```
 sudo bash dcos_install.sh slave_public
 ```
