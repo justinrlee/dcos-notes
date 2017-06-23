@@ -2,4 +2,4 @@
 
 * [Introduction](README.md)
 * Walkthroughs
-    * [distributed setup](distributed-setup.md)
+    * [Simple DC/OS Installation Walkthrough](distributed-setup.md)
