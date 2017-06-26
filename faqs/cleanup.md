@@ -2,30 +2,39 @@
 
 When a framework (such as Spark / Elastic) is removed from DC/OS by clicking the `Destroy` button in the DC/OS Services UI, it tends to leave a lot of stuff hanging around in DC/OS.  You may notice that if you destroy a service and re-create it, it will either (a) have stuff left over from previous deployments or (b) will refuse to properly start up.
 
-The root cause of this is this: many DC/OS services are started as a Marathon task, which is controlled by the Marathon framework.  These Marathon tasks will then register with the Apache Mesos masters as a new framework (distinct from the Marathon framework).  The new framework is then allowed to launch its own tasks directly against the Mesos API.  
+The root cause of this is this: a DC/OS services may be started as a Marathon task (which is stopped/started by the Marathon framework), but that task may then register directly with Apache Mesos as a new framework (independent of Marathon).  Because the task is now an Apache framework, it can trigger the start of new Apache Mesos tasks.
+
+Here's the key point:
 
 **Clicking the `Destroy` button in the DC/OS UI will kill the framework task, but will not kill tasks that were started by that framework task.**
 
-Here's a basic example:
+In addition to potentially leaving the tasks running, there may be other pieces of the frameworks left over after a service is 'destroyed' (i.e., the master framework task is killed).
 
-* Some of the frameworks store data in zookeeper, which is the distributed datastore used by DC/OS.  Destroy
+* Some of the frameworks store data in zookeeper, which is the distributed datastore used by DC/OS.  Destroying the framework task does not remove the data.
+* The frameworks may have created resource reservations in Apache Mesos.  Destroying the framework task does not free up these resource reservations.
 
-There 'proper' way to take down a framework consists of two steps:
+There are two ways to completely remove a service:
+* The documented process (remove via CLI, run Janitor)
+* The undocumented way (remove via UI, tear down the framework, run Janitor)
 
-1. Stopping/killing the framework (through the dcos cli) (note that this will render the framework unusable until you clean it up and re-start)
+### Documented Process: Remove via CLI, run Janitor
 
-2. Cleaning up the framework (through the use of the janitor script) (note that this will remove resources for a framework ( all state for the framework)
+If you look at the documentation for the major frameworks, they all have a documented uninstall process.  This follows roughly these steps:
 
-This is much more destructive than killing a framework through the UI; if you kill a framework through the UI it kills the scheduler, but you can start a new instance of the scheduler with all the same parameters just by re-deploying the framework.  If you use this process to kill a framework, it will remove all state from the framework, such as topic configuration.  So you probably don't want to do this for Kafka unless you're ready to re-configure it from scratch.
+1. Remove the framework through a `dcos uninstall --app-id=<service-name> <service>` command
 
-So depending on your configuration for Kafka, you may or may not want to go down this path, but I wanted to provide you the options.  We can discuss tomorrow.
+2. Cleaning up the framework through the use of the janitor script.
 
-Here's how to do these steps:
+Because this process is relatively well documented (just see the documentation for your service of choice), I'm not going to elaborate further here.
 
-Step 1:
-The 'correct' way to perform step 1 (stop/kill the package) is to uninstall it with the dcos cli:
-dcos package uninstall --app-id=<app-name> kafka
+### Undocumented process: Remove via "Destroy" button, tear down the framework manually, run Janitor
 
+Usually users get to this point by clicking "Destroy" on a service in the DC/OS UI rather than running the uninstall command.  This doesn't properly clean up after the removed service.
+
+Here's how to fix this:
+
+1. Load up the Mesos UI (reachable via https://\<master-url\>/mesos/), and click on the "Frameworks" tab
+2. Identify your destroyed framework.  It will have a 
 If, however, you've done 'destroyed' it in the UI, then it will be in a inactive but incomplete state.  This is because you will have killed the framework without killing its children tasks.  If you get to this point, you can identify the framework id by looking in the mesos UI, and then tear down all the children tasks with this:
 
 > curl -v -X POST http://hostname:5050/teardown -d 'frameworkId=\<frameworkId\>'

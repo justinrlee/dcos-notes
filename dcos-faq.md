@@ -1,4 +1,4 @@
-This is meant to be a rolling FAQ for DC/OS users.  
+This is meant to be a rolling FAQ for DC/OS users.  This is very incomplete.
 
 Q: I'm having issues installing DC/OS.  Can you help me troubleshoot?
 
