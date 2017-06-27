@@ -13,4 +13,4 @@ A1: Things to check with every installation:
     * journalctl -fu dcos-exhibitor
     * journalctl -fu dcos-mesos-master (on masters)
 
-A2: What installer did you use?  Try using the advanced installer.  It's a bit easier to use and a lot easier to troubleshoot and understand than the CLI and GUI installers.  A quick walkthrough of a very basic installation is available here: [Distributed DC/OS Cluster Setup](distributed-setup.md)
+A2: What installer did you use?  Try using the advanced installer.  It's a bit easier to use and a lot easier to troubleshoot and understand than the CLI and GUI installers.  A quick walkthrough of a very basic installation is available here: [Distributed DC/OS Cluster Setup](../distributed-setup.md)
