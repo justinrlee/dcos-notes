@@ -2,10 +2,11 @@
 
 * [Introduction](README.md)
 * Walkthroughs
-    * [Simple DC/OS Installation Walkthrough](distributed-setup.md)
+    * [Simple DC/OS Installation Walkthrough](walkthroughs/distributed-setup.md)
 
 * Troubleshooting
     * [FAQ](troubleshooting/faq.md)
 
-<!--* FAQs / How Tos
-    * [Framework Cleanup](faqs/cleanup.md)-->
+* FAQs / How Tos
+    * [CPU/Memory Allocation and Utilization Guide](faqs/utilization.md)
+    * [Framework Cleanup](faqs/cleanup.md)
