@@ -5,7 +5,7 @@
     * [Simple DC/OS Installation Walkthrough](walkthroughs/distributed-setup.md)
 
 * Troubleshooting
-    * [FAQ](troubleshooting/faq.md)
+    * [Installation FAQ](troubleshooting/installation-faq.md)
 
 * FAQs / How Tos
     * [CPU/Memory Allocation and Utilization Guide](faqs/utilization.md)
