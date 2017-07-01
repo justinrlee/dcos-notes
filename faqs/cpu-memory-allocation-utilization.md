@@ -218,11 +218,9 @@ sudo rm -f /var/lib/mesos/slave/meta/slaves/latest
 systemctl start dcos-mesos-slave)
 ```
 
-Mesos Containerizer / UCR Memory Behavior (allow swap)
+## Mesos Containerizer / UCR Memory Behavior (allow swap)
 By default, the Mesos containerizer will allow the container to swap past the specified memory limit.  If you desire to change this behavior, you can explicitly disable swap with this flag:
 
 > MESOS_CGROUPS_LIMIT_SWAP=true
 
 This should be placed in the same place that the MESOS_CGROUPS_ENABLE_CFS flag would be placed (see section above).
-
-## Mesos Containizer / UCR Memory Behavior (TBD)
