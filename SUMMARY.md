@@ -10,6 +10,3 @@
 * FAQs / How Tos
     * [CPU/Memory Allocation and Utilization Guide](faqs/utilization.md)
     * [Framework Cleanup](faqs/cleanup.md)
-
-* Script link test
-    * [Stuff](scripts/test.py)
