@@ -2,7 +2,8 @@
 
 * [Introduction](README.md)
 * Walkthroughs
-    * [Simple DC/OS Installation Walkthrough](walkthroughs/distributed-setup.md)
+    * [Simple Single-Master DC/OS Installation Walkthrough](walkthroughs/single-master-setup.md)
+    * [Simple Multi-Master DC/OS Installation Walkthrough](walkthroughs/multi-master-setup.md)
 
 * Troubleshooting
     * [Installation FAQ](troubleshooting/installation-faq.md)

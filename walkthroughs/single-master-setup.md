@@ -9,7 +9,7 @@ This document isn't meant to be used to build a production-ready stack (it's mis
 
 ---
 
-Requirements: 6 systems, all configured as follows:
+Requirements: 4 systems, all configured as follows:
 * CentOS 7.3 (CentOS-7-x86_64-Minimal-1611.iso)
 * Static IP addresses
 * SSH access, with sudo permissions (using linux user 'admin' with sudo access)
@@ -22,8 +22,6 @@ Bootstrap node:
 
 Master nodes:
 * 172.16.125.21
-* 172.16.125.22
-* 172.16.125.23
 
 Public Agent node:
 * 172.16.125.25
@@ -273,8 +271,6 @@ master_discovery: static
 oauth_enabled: 'false'
 master_list:
  - 172.16.125.21
- - 172.16.125.22
- - 172.16.125.23
 resolvers:
 - 8.8.4.4
 ```
@@ -349,7 +345,7 @@ $ curl http://172.16.125.20/cluster-package-info.json
 }
 ```
 
-## Install DC/OS on each of your master nodes.
+## Install DC/OS on your master nodes.
 
 For each master node, follow this process:
 
