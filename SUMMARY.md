@@ -9,6 +9,6 @@
     * [Installation FAQ](troubleshooting/installation-faq.md)
 
 * FAQs / How Tos
-    * [General Frequently Asked Questions](faqs/faq.md)
+    * [Frequently Asked Questions](faqs/faq.md)
     * [CPU/Memory Allocation and Utilization Guide](faqs/utilization.md)
     * [Framework Cleanup](faqs/cleanup.md)

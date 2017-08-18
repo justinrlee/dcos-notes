@@ -443,6 +443,27 @@ sudo bash dcos_install.sh slave_public
 
 This may take several minutes to complete.  You can do this for all of your agents at the same time (from different shell sessions).
 
+# Wait for installation to complete:
+
+It may take several minutes for your cluster to completely install itself.  Each node will run a set of systemd service units that run the various services that comprise DC/OS.
+
+The installation will start with two systemd units (`dcos-download.service` and `dcos-setup.service`) which will download and install everything from your bootstrap node.  Once these have completed, they will install additional systemd units and remove themselves.
+
+To monitor the deployment of your systemd units, you can log into each of your nodes (master and agents), and see the overall status with this command:
+
+```
+sudo systemctl list-units | grep dcos
+```
+
+Additionally, you can monitor individual systemd units with this:
+
+```
+sudo journalctl -fu dcos-<servicename>.service
+```
+
+(For example `sudo systemctl -fu dcos-mesos-master.service`)
+
+
 # Success!
 
 Once all of the systemd units on your masters are fully loaded:active, you should be able to log in to the DC/OS UI.  Navigate to http://master-ip/ and you should get the DC/OS UI.

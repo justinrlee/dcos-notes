@@ -30,6 +30,19 @@ MESOS_ATTRIBUTES=location:bare_metal;disk_type:ssd
 
 (You can specify additional attributes by separating by semicolons)
 
+3) Remove the old slave metadata and restart the dcos-mesos-slave (or dcos-mesos-slave-public) service:
+
+```
+# Replace dcos-mesos-slave with dcos-mesos-slave-public for public agents:
+sudo systemctl stop dcos-mesos-slave
+sudo rm /var/lib/dcos/mesos-resources
+sudo rm /var/lib/mesos/slave/meta/slaves/latest
+# Replace dcos-mesos-slave with dcos-mesos-slave-public for public agents:
+sudo systemctl start dcos-mesos-slave
+```
+
+4) Most likely required: if the service doesn't come up, remove 
+
 ## How do I determine what version of DC/OS a specific node is on?
 
 Look at /opt/mesosphere/etc/dcos-version.json
@@ -69,7 +82,7 @@ ln -s test.pem "$(openssl x509 -hash -noout -in "test.pem")".0
 
 This should result in a directory that looks roughly like this:
 
-```
+```bash
 [root@ip-10-10-0-138 certs]# ll
 total 4
 lrwxrwxrwx. 1 root root    8 Apr 26 00:33 87e86989.0 -> test.pem
