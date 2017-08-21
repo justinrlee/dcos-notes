@@ -12,3 +12,7 @@
     * [Frequently Asked Questions](faqs/faq.md)
     * [CPU/Memory Allocation and Utilization Guide](faqs/utilization.md)
     * [Framework Cleanup](faqs/cleanup.md)
+
+* Spark Stuff
+    * [Spark Notes](spark/spark.md)
+    * [Spark Env Setup](spark/env.md)

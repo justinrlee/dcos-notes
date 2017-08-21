@@ -119,3 +119,5 @@ echo "MESOS_HADOOP_HOME=/opt/hadoop/" >> /var/lib/dcos/mesos-slave-common
 systemctl restart dcos-mesos-slave
 
 ```
+
+(Source: http://mesos.apache.org/documentation/latest/configuration/)
