@@ -88,3 +88,34 @@ total 4
 lrwxrwxrwx. 1 root root    8 Apr 26 00:33 87e86989.0 -> test.pem
 -rw-r--r--. 1 root root 1285 Apr 26 00:31 test.pem
 ```
+
+## How do I configure the Mesos fetcher to pull data from HDFS?
+Each Mesos agent needs a set of hadoop binaries present on it (configured with proper `core-site.xml` and `hdfs-site.xml`).  Additionally, you must pass in the environment variable `MESOS_HADOOP_HOME` to your mesos agent.
+
+For example, to configure this to work with the DC/OS hdfs package, you can run something similar to the following:
+
+```bash
+
+# Switch to root:
+sudo su -
+
+# Download the hadoop binary package
+curl -LO http://mirror.reverse.net/pub/apache/hadoop/common/hadoop-2.6.5/hadoop-2.6.5.tar.gz
+# Extract it and put in /opt/hadoop
+tar -xzvf hadoop-2.6.5.tar.gz
+mv hadoop-2.6.5 /opt/hadoop
+
+# Install java in case it's not already installed
+yum install -y java-1.8.0-openjdk
+
+# Download core-site.xml and hdfs-site.xml to /opt/hadoop/etc/hadoop (and back up the existing instances)
+cd /opt/hadoop/etc/hadoop/
+mv hdfs-site.xml hdfs-site.xml.bak-$(date +%Y%m%d-%H%M%S)
+mv core-site.xml core-site.xml.bak-$(date +%Y%m%d-%H%M%S)
+curl -O api.hdfs.marathon.l4lb.thisdcos.directory:80/v1/endpoints/core-site.xml
+curl -O api.hdfs.marathon.l4lb.thisdcos.directory:80/v1/endpoints/hdfs-site.xml
+
+echo "MESOS_HADOOP_HOME=/opt/hadoop/" >> /var/lib/dcos/mesos-slave-common
+systemctl restart dcos-mesos-slave
+
+```
