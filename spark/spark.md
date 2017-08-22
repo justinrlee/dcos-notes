@@ -1,5 +1,5 @@
 # Spark Notes
-This document is incredibly incomplete.  It's meant as a rolling document for different ways to run Spark jobs on DC/OS.  It's mostly notes for myself, but I figure I can share with others as I learn.
+This document is very incomplete and draft-like.  It's meant as a rolling document for different ways to run Spark jobs on DC/OS.  It's mostly notes for myself, provided with no guarantees of anything.
 
 Reminder: DC/OS essentially consists of many additional services packaged to interact with Apache Mesos, so all of these essentially boil down to different ways to run Spark on Apache Mesos, adjusted for the DC/OS environment.
 
@@ -11,26 +11,34 @@ According to the Spark docs, there are two primary high-level ways of running Sp
 
 1. Client Mode: Start a Spark driver on the calling client machine.  We'll look at:
 
-    1. Calling from outside cluster
-    2. Calling from inside the cluster, using hdfs
-    3. Calling from a Docker container running in the cluster
-    4. Calling from Marathon
+    1. Running Spark jobs from outside the cluster, in client mode
+    2. Running Spark jobs from inside the cluster, in client mode, using hdfs
+    3. Running Spark jobs from a Docker container in the cluster
+    4. Running Spark jobs from a Marathon job, in client mode
+    5. Running Spark jobs from a Marathon job as a Docker container, in client mode
 
 2. Cluster mode: Start a Spark driver as a task hosted in the cluster.  This requires a dispatcher.  We'll look at:
 
-    1. Calling from dcos spark command line
-    2. Calling from outside cluster
-    3. Calling from inside cluster, using hdfs
+    1. Running Spark jobs from the dcos command line using the `dcos spark run` command, which runs jobs in cluster mode
+    2. Running Spark jobs from outside the cluster in cluster mode
+    3. Running Spark jobs from inside the clsuter, in cluster mode, using hdfs
+    4. Some other stuff.
 
 
-First, let's look at running jobs without Mesos.
+First, we'll look at running Spark jobs in standalone/local mode (without Mesos), and then we'll address each of the above situations.
+
+*This document assumes everything is run as root, for ease of use.  Maybe I'll add proper permissions and stuff later.*
 
 ***
 
-## Mode: Run using internal spark (no Mesos integration)
+# Local Mode: Run Spark jobs without Mesos (Spark Standalone)
 
-Setup (run as root):
+This section is primarily meant to introduce the job that we'll be running throughout this document.
 
+*Note that 'Standalone Mode' can be used to mean building out a Spark cluster of multiple nodes (no YARN or Mesos), and running jobs on this cluster.  This part of the document does **not** use a cluster like this; instead, we specify `--master local` to run jobs locally without a cluster.*
+
+
+First, download and extract the Spark binaries and place them somewhere accessible (such as /opt)
 ```
 # Download the Mesos-specific Spark binaries
 curl -LO https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz
@@ -38,19 +46,19 @@ tar -xzvf spark-2.2.0-bin-2.6.tgz
 mv spark-2.2.0-bin-2.6 /opt/spark
 ```
 
-Set up path:
+Add the /opt/spark/bin directory to your PATH, so that commands can be run directly
 ```
 echo 'PATH=$PATH:/opt/spark/bin' >> ~/.bash_profile
 sed -i '/export PATH/d' ~/.bash_profile 
 echo "export PATH" >> ~/.bash_profile
 ```
 
-Download examples jar file:
+Download the jar file that contains all of our examples
 ```
 curl -LO https://downloads.mesosphere.com/spark/assets/spark-examples_2.11-2.0.1.jar
 ```
 
-Run it:
+Submit it to the local 'cluster':
 ```
 spark-submit \
     --master local \
@@ -59,7 +67,7 @@ spark-submit \
     30
 ```
 
-So what is this actually doing?
+#### So what is this actually doing?
 
 1. We're downloading the Spark binaries, and extracting them
 2. We're setting up our local path to point to the spark bin directory
@@ -78,32 +86,42 @@ What could we do differently, for local run / what errors may we run into?
 
 ***
 
-## Mode: Client Mode with Mesos from Outside Cluster
-#### This requires the following:
+# Client Mode
+The official [Apache Mesos documentation](https://spark.apache.org/docs/latest/running-on-mesos.html) says this: 
 
-Download and extract spark binaries
+>In client mode, a Spark Mesos framework is launched directly on the client machine and waits for the driver output.
+
+What this means is that on the machine that the `spark-submit` command is run, we are starting a mini service that registers with Apache Mesos as a framework.  This service will then receive and accept resource offers from Apache Mesos, and will schedule tasks (part of the job) on the Mesos agents based on those resources offers.
+
+***
+<!-- *** -->
+
+## Client Mode: Running Spark jobs from outside the cluster, in client mode
+
+#### The first several parts of this are identical to running Spark jobs in local standalone mode.
+
+First, download and extract the Spark binaries and place them somewhere accessible (such as /opt)
 ```
-# Download the Mesos-specific Spark binaries
 curl -LO https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz
 tar -xzvf spark-2.2.0-bin-2.6.tgz
 mv spark-2.2.0-bin-2.6 /opt/spark
 ```
 
-Set up path:
+Add the /opt/spark/bin directory to your PATH, so that commands can be run directly
 ```
 echo 'PATH=$PATH:/opt/spark/bin' >> ~/.bash_profile
 sed -i '/export PATH/d' ~/.bash_profile 
 echo "export PATH" >> ~/.bash_profile
 ```
 
-Download examples jar file:
+Download the jar file that contains all of our examples
 ```
 curl -LO https://downloads.mesosphere.com/spark/assets/spark-examples_2.11-2.0.1.jar
 ```
 
-**New: Add required libraries**
+#### In order to run in Client mode, the following changes must be made:
 
-You must obtain these files from somewhere (perhaps from an existing Mesos node):
+You must obtain these files from somewhere (they can be copied from an existing Mesos node, where they live in `/opt/mesosphere/lib/`):
 
 * libaprutil-1.so.0
 * libcrypto.so.1.0.0
@@ -117,37 +135,61 @@ You must obtain these files from somewhere (perhaps from an existing Mesos node)
 Put them all in one directory (e.g. /usr/lib/mesos), then export the path to that directory as an environment variable:
 
 ```
-export LD_LIBRARY_PATH=/usr/lib/mesos
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/mesos
 ```
 
-Then, compose your command like this (you must specify the correct IP addresses for your mesos zookeeper instances):
+Then, run the `spark-submit` command like this (you must specify the correct IP addresses for your mesos zookeeper instances):
 
 ```
 spark-submit \
   --class org.apache.spark.examples.SparkPi \
   --master mesos://zk://10.10.0.136:2181,10.10.0.50:2181,10.10.0.50:2181/mesos \
+  --conf spark.executor.uri=https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz \
   --deploy-mode client \
-  spark-examples_2.11-2.0.1.jar 40
+  spark-examples_2.11-2.0.1.jar 400
 ```
 
 So what are we doing differently?
 * We're pointing master at the Mesos zookeeper cluster (this requires that we set up and point to the mesos libraries)
 * We're running in client mode
+* Providing a mesos executor URI to download to each Mesos task (to run the stuff)
 
 What else can we do?
 * If we only have a single master, we could change `mesos://zk://10.10.0.136:2181,10.10.0.50:2181,10.10.0.50:2181/mesos` to `mesos://HOSTNAME:5050`
 * If we had hdfs up and running, we could download the jar file from hdfs
 * If we had s3 up and running, we could download the jar from s3
 
+We can also run with a Docker image instead of providing an executor URI:
 
+```
+spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --master mesos://zk://10.10.0.136:2181,10.10.0.50:2181,10.10.0.50:2181/mesos \
+  --conf spark.mesos.executor.docker.image=mesosphere/spark:1.1.1-2.2.0-hadoop-2.7 \
+  --conf spark.mesos.executor.home=/opt/spark/dist \
+  --deploy-mode client \
+  spark-examples_2.11-2.0.1.jar 400
+```
+
+And we can configure the task to run with the 'mesos' containerizer:
+```
+spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --master mesos://zk://10.10.0.136:2181,10.10.0.50:2181,10.10.0.50:2181/mesos \
+  --conf spark.mesos.executor.docker.image=mesosphere/spark:1.1.1-2.2.0-hadoop-2.7 \
+  --conf spark.mesos.executor.home=/opt/spark/dist \
+  --conf spark.mesos.containerizer=mesos \
+  --deploy-mode client \
+  spark-examples_2.11-2.0.1.jar 400
+```
 
 ***
 
-## Mode: Run in client mode, from a node inside the cluster
+## Client Mode: Running Spark jobs from inside the cluster, in client mode, using hdfs
 
 Next, we're gonna set up hdfs and run in client mode.  We're going to use the dcos hdfs package, and we don't have to worry about obtaining the libraries (although we will have to point to them).
 
-So, first, set up hdfs (see: [Spark Env Setup](env.md)
+So, first, set up hdfs (see: [Spark Env Setup](env.md))
 
 Now, we should be able to directly access hdfs (this should result in an empty list):
 
@@ -180,7 +222,7 @@ spark-submit \
   --class org.apache.spark.examples.SparkPi \
   --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos \
   --deploy-mode client \
-  hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 40
+  hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 400
 ```
 
 So what are we doing differently?
@@ -200,7 +242,7 @@ spark-submit \
   --conf spark.executor.uri=https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz \
   --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos \
   --deploy-mode client \
-  hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 40
+  hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 400
 ```
 
 Specify a docker image to run executors tasks in (note that you may have to specify `spark.mesos.executor.home` to point to the location of the actual spark distribution if it's not in /opt/spark/):
@@ -211,5 +253,37 @@ spark-submit \
   --conf spark.mesos.executor.home=/opt/spark/dist \
   --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos \
   --deploy-mode client \
-  hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 40
+  hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 400
 ```
+
+***
+
+## Client Mode: Running Spark jobs from a Docker container in the cluster
+
+***
+
+## Client Mode: Running Spark jobs from a Marathon job, in client mode
+
+***
+
+## Client Mode: Running Spark jobs from a Marathon job as a Docker container, in client mode
+
+***
+
+# Cluster Mode
+
+***
+
+## Cluster Mode: Running Spark jobs from the dcos command line using the `dcos spark run` command, which runs jobs in cluster mode
+
+***
+
+## Cluster Mode: Running Spark jobs from outside the cluster in cluster mode
+
+***
+
+## Cluster Mode: Running Spark jobs from inside the clsuter, in cluster mode, using hdfs
+
+***
+
+## Cluster Mode: Some other stuff.
