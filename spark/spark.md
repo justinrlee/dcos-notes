@@ -221,6 +221,7 @@ Now we can run our test command:
 spark-submit \
   --class org.apache.spark.examples.SparkPi \
   --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos \
+  --conf spark.executor.uri=https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz \
   --deploy-mode client \
   hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 400
 ```
@@ -235,23 +236,27 @@ So what are we doing differently?
 
 Here are some other options:
 
-Specify a URI to download the spark binaries for each task
+
+We can also run with a Docker image instead of providing an executor URI:
+
 ```
 spark-submit \
   --class org.apache.spark.examples.SparkPi \
-  --conf spark.executor.uri=https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz \
   --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos \
+  --conf spark.mesos.executor.docker.image=mesosphere/spark:1.1.1-2.2.0-hadoop-2.7 \
+  --conf spark.mesos.executor.home=/opt/spark/dist \
   --deploy-mode client \
   hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 400
 ```
 
-Specify a docker image to run executors tasks in (note that you may have to specify `spark.mesos.executor.home` to point to the location of the actual spark distribution if it's not in /opt/spark/):
+And we can configure the task to run with the 'mesos' containerizer:
 ```
 spark-submit \
   --class org.apache.spark.examples.SparkPi \
+  --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos \
   --conf spark.mesos.executor.docker.image=mesosphere/spark:1.1.1-2.2.0-hadoop-2.7 \
   --conf spark.mesos.executor.home=/opt/spark/dist \
-  --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos \
+  --conf spark.mesos.containerizer=mesos \
   --deploy-mode client \
   hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 400
 ```
