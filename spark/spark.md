@@ -129,3 +129,87 @@ spark-submit \
   --deploy-mode client \
   spark-examples_2.11-2.0.1.jar 40
 ```
+
+So what are we doing differently?
+* We're pointing master at the Mesos zookeeper cluster (this requires that we set up and point to the mesos libraries)
+* We're running in client mode
+
+What else can we do?
+* If we only have a single master, we could change `mesos://zk://10.10.0.136:2181,10.10.0.50:2181,10.10.0.50:2181/mesos` to `mesos://HOSTNAME:5050`
+* If we had hdfs up and running, we could download the jar file from hdfs
+* If we had s3 up and running, we could download the jar from s3
+
+
+
+***
+
+## Mode: Run in client mode, from a node inside the cluster
+
+Next, we're gonna set up hdfs and run in client mode.  We're going to use the dcos hdfs package, and we don't have to worry about obtaining the libraries (although we will have to point to them).
+
+So, first, set up hdfs (see: [Spark Env Setup](env.md)
+
+Now, we should be able to directly access hdfs (this should result in an empty list):
+
+```
+hdfs dfs -ls /
+```
+
+Let's put the example jar file in hdfs:
+```
+curl -LO https://downloads.mesosphere.com/spark/assets/spark-examples_2.11-2.0.1.jar
+hdfs dfs -put spark-examples_2.11-2.0.1.jar /
+```
+
+In order for Spark (client mode) to know how to access hdfs, you have to tell it where the hdfs configurations are:
+
+```
+export HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop 
+```
+
+And again, we have to tell Spark where the library files are (but this time, they already exist on the filesystem):
+
+```
+export LD_LIBRARY_PATH=/opt/mesosphere/lib
+```
+
+Now we can run our test command:
+
+```
+spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos \
+  --deploy-mode client \
+  hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 40
+```
+
+So what are we doing differently?
+* We're pointing master at the Mesos zookeeper cluster using the zk DNS names (available within the cluster)
+* We're accessing the jar file from hdfs, which additionally requires that:
+    * The jar file has to exist on hdfs
+    * We have the hdfs core-site and hdfs-site XML files
+    * We tell Spark where to find the core-site.xml and hdfs-site.xml files
+    * (We don't actually need to install all of the hadoop binaries to access the jar from Spark - they're primarily used to put the jar in its place) (I think).
+
+Here are some other options:
+
+Specify a URI to download the spark binaries for each task
+```
+spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --conf spark.executor.uri=https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz \
+  --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos \
+  --deploy-mode client \
+  hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 40
+```
+
+Specify a docker image to run executors tasks in (note that you may have to specify `spark.mesos.executor.home` to point to the location of the actual spark distribution if it's not in /opt/spark/):
+```
+spark-submit \
+  --class org.apache.spark.examples.SparkPi \
+  --conf spark.mesos.executor.docker.image=mesosphere/spark:1.1.1-2.2.0-hadoop-2.7 \
+  --conf spark.mesos.executor.home=/opt/spark/dist \
+  --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos \
+  --deploy-mode client \
+  hdfs://hdfs/spark-examples_2.10-1.4.0-SNAPSHOT.jar 40
+```
