@@ -15,6 +15,7 @@ According to the Spark docs, there are two primary high-level ways of running Sp
     2. Running Spark jobs from inside the cluster, in client mode, using hdfs
     3. Running Spark jobs from a Docker container in the cluster
     4. Running Spark jobs from a Marathon job, in client mode
+    4. Running Spark jobs from a Metronome job, in client mode
     5. Running Spark jobs from a Marathon job as a Docker container, in client mode
 
 2. Cluster mode: Start a Spark driver as a task hosted in the cluster.  This requires a dispatcher.  We'll look at:
@@ -28,6 +29,18 @@ According to the Spark docs, there are two primary high-level ways of running Sp
 First, we'll look at running Spark jobs in standalone/local mode (without Mesos), and then we'll address each of the above situations.
 
 *This document assumes everything is run as root, for ease of use.  Maybe I'll add proper permissions and stuff later.*
+
+**Currently, everything in this document will attempt to use all available cores.  These examples should not be used without tuning for resource utilization:**
+```bash
+# Cluster mode configuration options:
+--conf spark.driver.cores=X # In cluster mode, the number of cores to be used by the driver process
+--conf spark.driver.memory=Xg # In cluster mode, the amount of memory to be used by the driver process
+
+# Executor configuration options:
+--conf spark.cores.max=X # The total number of cores to be used by all executors
+--conf spark.executor.cores=X # The number of cores to be used by each executor.  If unspecified, will use all available cores on all nodes
+--conf spark.executor.memory=Xg # The amount of memory to be used by each executor process
+```
 
 ***
 
@@ -87,11 +100,14 @@ What could we do differently, for local run / what errors may we run into?
 ***
 
 # Client Mode
-The official [Apache Mesos documentation](https://spark.apache.org/docs/latest/running-on-mesos.html) says this: 
+The official [Apache Mesos documentation](https://spark.apache.org/docs/latest/running-on-mesos.html#client-mode) says this: 
 
->In client mode, a Spark Mesos framework is launched directly on the client machine and waits for the driver output.
+> In client mode, a Spark Mesos framework is launched directly on the client machine and waits for the driver output.
 
 What this means is that on the machine that the `spark-submit` command is run, we are starting a mini service that registers with Apache Mesos as a framework.  This service will then receive and accept resource offers from Apache Mesos, and will schedule tasks (part of the job) on the Mesos agents based on those resources offers.
+
+Random comment:
+* The Spark driver process will host an http server from which executors can retrieve the jar file
 
 ***
 <!-- *** -->
@@ -264,31 +280,147 @@ spark-submit \
 ***
 
 ## Client Mode: Running Spark jobs from a Docker container in the cluster
+Rather than downloading and configuring all of the local binaries, `spark-submit` can be run from a Docker container.  Note that this isn't necessarily more lightweight (the Docker images tend to be rather large), but it may be a bit easier.
+
+Also note that since we're running in client mode, and the Spark executors must reach back to the driver to obtain the jar file, we have to run in `-- net host` mode.
+
+For example:
+```
+docker run --net host mesosphere/spark:1.1.1-2.2.0-hadoop-2.7 \
+/opt/spark/dist/bin/spark-submit \
+--master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos \
+--name org.apache.spark.examples.SparkPi \
+--conf spark.mesos.executor.docker.image=mesosphere/spark:1.1.1-2.2.0-hadoop-2.7 \
+--conf spark.executor.home=/opt/spark/dist \
+--class org.apache.spark.examples.SparkPi \
+/opt/spark/dist/examples/jars/spark-examples_2.11-2.2.0.jar \
+400
+```
 
 ***
 
 ## Client Mode: Running Spark jobs from a Marathon job, in client mode
 
+Just as Spark jobs can be run from the command line, they can also be run from Marathon.
+
+This is an example marathon.json definition that does the following things:
+* Download the Spark binary package, for use to start the Spark driver
+* Download the Spark examples tar file
+* Starts the client as a Marathon task
+* Runs a `tail -f /dev null` so that the task doesn't immediately restart as soon as it's done (optional, but useful for demonstration purposes).
+
+```json
+{
+  "id": "/spark-run-client",
+  "cmd": "$MESOS_SANDBOX/spark-2.2.0-bin-2.6/bin/spark-submit --class org.apache.spark.examples.SparkPi --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos --conf spark.executor.uri=https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz --deploy-mode client $MESOS_SANDBOX/spark-examples_2.11-2.0.1.jar 400; tail -f /dev/null;",
+  "instances": 1,
+  "cpus": 0.1,
+  "mem": 1024,
+  "fetch": [
+    {
+      "uri": "https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz",
+      "extract": true,
+      "executable": false,
+      "cache": false
+    },
+    {
+      "uri": "https://downloads.mesosphere.com/spark/assets/spark-examples_2.11-2.0.1.jar",
+      "extract": true,
+      "executable": false,
+      "cache": false
+    }
+  ]
+}
+```
+
+*Note: JSON does not support multiline strings.  The command must be run as a single line.  I construct the command like this, and and remove endlines:*
+```bash
+$MESOS_SANDBOX/spark-2.2.0-bin-2.6/bin/spark-submit
+    --class org.apache.spark.examples.SparkPi
+    --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos
+    --conf spark.executor.uri=https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz
+    --deploy-mode client
+    $MESOS_SANDBOX/spark-examples_2.11-2.0.1.jar 400;
+    tail -f /dev/null;
+```
+***
+
+## Client Mode: Running Spark jobs from a Metronome job, in client mode
+```json
+{
+  "id": "spark-run-client-metronome",
+  "labels": {},
+  "run": {
+    "cpus": 0.01,
+    "mem": 1024,
+    "disk": 0,
+    "cmd": "$MESOS_SANDBOX/spark-2.2.0-bin-2.6/bin/spark-submit --class org.apache.spark.examples.SparkPi --master mesos://zk://zk-1.zk:2181,zk-2.zk:2181,zk-3.zk:2181,zk-4.zk:2181,zk-5.zk:2181/mesos --conf spark.executor.uri=https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz --deploy-mode client $MESOS_SANDBOX/spark-examples_2.11-2.0.1.jar 400;",
+    "env": {},
+    "artifacts": [
+      {
+        "uri": "https://downloads.mesosphere.com/spark/assets/spark-2.2.0-bin-2.6.tgz",
+        "extract": true,
+        "executable": false,
+        "cache": false
+      },
+      {
+        "uri": "https://downloads.mesosphere.com/spark/assets/spark-examples_2.11-2.0.1.jar",
+        "extract": true,
+        "executable": false,
+        "cache": false
+      }
+    ],
+    "maxLaunchDelay": 3600,
+    "volumes": [],
+    "restart": {
+      "policy": "NEVER"
+    }
+  },
+  "schedules": []
+}
+```
+
 ***
 
 ## Client Mode: Running Spark jobs from a Marathon job as a Docker container, in client mode
+Todo:
 
 ***
 
 # Cluster Mode
+Todo:
+The official [Apache Mesos documentation](https://spark.apache.org/docs/latest/running-on-mesos.html#cluster-mode) says this: 
+
+> Spark on Mesos also supports cluster mode, where the driver is launched in the cluster and the client can find the results of the driver from the Mesos Web UI.*
+> 
+> To use cluster mode, you must start the MesosClusterDispatcher in your cluster via the sbin/start-mesos-dispatcher.sh script, passing in the Mesos master URL (e.g: mesos://host:5050). This starts the MesosClusterDispatcher as a daemon running on the host.*
+> 
+> ...
+>
+> From the client, you can submit a job to Mesos cluster by running spark-submit and specifying the master URL to the URL of the MesosClusterDispatcher (e.g: mesos://dispatcher:7077). You can view driver statuses on the Spark cluster Web UI.*
+
+The dispatcher can be run manually, but it is much easier to run the dispatcher using the provided DC/OS Universe `spark` package.
+
+To deploy the dispatcher, run it by clicking `spark` in the Universe.
 
 ***
 
 ## Cluster Mode: Running Spark jobs from the dcos command line using the `dcos spark run` command, which runs jobs in cluster mode
+Todo:
 
 ***
 
 ## Cluster Mode: Running Spark jobs from outside the cluster in cluster mode
+Todo:
 
 ***
 
 ## Cluster Mode: Running Spark jobs from inside the clsuter, in cluster mode, using hdfs
+Todo:
 
 ***
 
 ## Cluster Mode: Some other stuff.
+Todo:
+
+### Cluster Mode: Run your own dispatcher
