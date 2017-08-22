@@ -415,7 +415,7 @@ Todo:
 
 ***
 
-## Cluster Mode: Running Spark jobs from inside the clsuter, in cluster mode, using hdfs
+## Cluster Mode: Running Spark jobs from inside the cluster, in cluster mode, using hdfs
 Todo:
 
 ***
@@ -423,4 +423,4 @@ Todo:
 ## Cluster Mode: Some other stuff.
 Todo:
 
-### Cluster Mode: Run your own dispatcher
+## Cluster Mode: Run your own dispatcher
