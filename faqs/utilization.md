@@ -1,6 +1,19 @@
 # DC/OS CPU/Memory Allocation and Utilization
 
-*This document is correct as of DC/OS 1.9.0.  Some of the default behaviors described in this document may change in future versions of DC/OS*
+*This document applies to DC/OS version 1.9.x and below.  As of DC/OS 1.10.0, the default behaviors have been changed:*
+
+## 1.10.x and above:
+* `MESOS_CGROUPS_ENABLE_CFS=false` is set by default for all containers started with the Universal Container Runtime
+* This means that by default in 1.10.0, DC/OS will hard limit (throttle) all tasks started by UCR down to the specified number of CPU shares
+* This can be changed by creating/updating the file `/var/lib/dcos/mesos-slave-common` and adding this line: `MESOS_CGROUPS_ENABLE_CFS=true`, then restarting your agent with `systemctl restart mesos-slave` (or mesos-slave-public)
+* Changing this will not affect containers that are already running.
+
+
+## 1.9.x and below:
+* `MESOS_CGROUPS_ENABLE_CFS=true` is set by default for all containers started with the Universal Container Runtime
+* This means that by default in 1.10.0, DC/OS will allow UCR tasks to spike above their allocated CPUs, as long as other tasks are not being preventing from using their CPUs.
+* This can be changed by creating/updating the file `/var/lib/dcos/mesos-slave-common` and adding this line: `MESOS_CGROUPS_ENABLE_CFS=false`, then restarting your agent with `systemctl restart mesos-slave` (or mesos-slave-public)
+* Changing this will not affect containers that are already running.
 
 ***
 
