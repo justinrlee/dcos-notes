@@ -102,7 +102,8 @@ Okay, on to actual usage in DC/OS.
 
 ## Using the DC/OS EE CA APIs to generate and sign certificates
 
-### Prereqs: You have must have a user with at least one of the following permissions (Reference: https://docs.mesosphere.com/1.10/security/perms-reference/)
+### Prereqs: 
+You have must have a user with at least one of the following permissions (Reference: https://docs.mesosphere.com/1.10/security/perms-reference/)
 
 * `dcos:superuser full` 
 * `dcos:adminrouter:ops:ca:rw full`
@@ -196,6 +197,7 @@ rm key.pem.oneline
 
 
 3. POST the CSR back to the API (`sign` endpoint) get the actual certificate
+
 ```bash
 curl -k https://${MASTER_IP}/ca/api/v2/sign \
     -X POST \
