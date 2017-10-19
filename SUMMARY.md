@@ -12,6 +12,7 @@
     * [Frequently Asked Questions](faqs/faq.md)
     * [CPU/Memory Allocation and Utilization Guide](faqs/utilization.md)
     * [Framework Cleanup](faqs/cleanup.md)
+    * [DC/OS Certificates for Dummies](faqs/certificates-for-dummies.md)
 
 * Spark Stuff
     * [Spark Notes](spark/spark.md)
