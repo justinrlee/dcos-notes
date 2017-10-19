@@ -121,103 +121,104 @@ We're going to use the DC/OS CA to generate a private key for us, and sign a cer
 
 1. First, you must have a token to authenticate to DC/OS.  This set of commands will generate a token and put it in a file called token.txt
 
-```bash
-export MASTER_IP=10.10.0.19
-export USERNAME=ca
-export PASSWORD=password
+    ```bash
+    export MASTER_IP=10.10.0.19
+    export USERNAME=ca
+    export PASSWORD=password
 
-## Put username and password in a JSON file, to be passed to the DC/OS auth API
-echo '{"uid": "USERNAME", "password": "PASSWORD"}' > login_request.json
-sed -i "s/USERNAME/${USERNAME}/" login_request.json
-sed -i "s/PASSWORD/${PASSWORD}/" login_request.json
+    ## Put username and password in a JSON file, to be passed to the DC/OS auth API
+    echo '{"uid": "USERNAME", "password": "PASSWORD"}' > login_request.json
+    sed -i "s/USERNAME/${USERNAME}/" login_request.json
+    sed -i "s/PASSWORD/${PASSWORD}/" login_request.json
 
-## POST the JSON file to the auth login API
-curl -k https://${MASTER_IP}/acs/api/v1/auth/login \
-    -X POST \
-    -H 'content-type:application/json' \
-    -d @login_request.json \
-    > login_token.json
+    ## POST the JSON file to the auth login API
+    curl -k https://${MASTER_IP}/acs/api/v1/auth/login \
+        -X POST \
+        -H 'content-type:application/json' \
+        -d @login_request.json \
+        > login_token.json
 
-## Parse the JSON response and save the token to a text file
-cat login_token.json | python -c 'import sys,json;j=sys.stdin.read();print(json.loads(j))["token"]' > token
-rm login_request.json
-rm login_token.json
+    ## Parse the JSON response and save the token to a text file
+    cat login_token.json | python -c 'import sys,json;j=sys.stdin.read();print(json.loads(j))["token"]' > token
+    rm login_request.json
+    rm login_token.json
 
-## Verify that you have a token
-cat token
-```
+    ## Verify that you have a token
+    cat token
+    ```
 
 2. Then, create a json file to request an SSH key and generate a CSR, then POST it:
 
-```bash
-## Replace with the canonical name of the server you're generating the certificate for
-export CANONICAL_NAME="repo.internal"
-## Replace with the hostname, fqdn, and ip address of server you're generating the certificate for.
-export LIST_OF_HOSTS='"repo", "repo.internal", "10.10.0.200"' 
+    ```bash
+    ## Replace with the canonical name of the server you're generating the certificate for
+    export CANONICAL_NAME="repo.internal"
+    ## Replace with the hostname, fqdn, and ip address of server you're generating the certificate for.
+    export LIST_OF_HOSTS='"repo", "repo.internal", "10.10.0.200"' 
 
-echo '{
-    "CN": "CANONICAL_NAME",
-    "key": {"algo": "rsa", "size": 4096},
-    "hosts": [LIST_OF_HOSTS]
-}' > key_request.json
+    echo '{
+        "CN": "CANONICAL_NAME",
+        "key": {"algo": "rsa", "size": 4096},
+        "hosts": [LIST_OF_HOSTS]
+    }' > key_request.json
 
-sed -i "s/CANONICAL_NAME/${CANONICAL_NAME}/" key_request.json
-sed -i "s/LIST_OF_HOSTS/${LIST_OF_HOSTS}/" key_request.json
+    sed -i "s/CANONICAL_NAME/${CANONICAL_NAME}/" key_request.json
+    sed -i "s/LIST_OF_HOSTS/${LIST_OF_HOSTS}/" key_request.json
 
-## Verify the JSON looks correct
-cat key_request.json
+    ## Verify the JSON looks correct
+    cat key_request.json
 
-## POST it
-curl -k https://${MASTER_IP}/ca/api/v2/newkey \
-    -X POST \
-    -H 'content-type:application/json'  \
-    -d @key_request.json \
-    -H "Authorization: token=$(cat token)" \
-    > newkey.json
+    ## POST it
+    curl -k https://${MASTER_IP}/ca/api/v2/newkey \
+        -X POST \
+        -H 'content-type:application/json'  \
+        -d @key_request.json \
+        -H "Authorization: token=$(cat token)" \
+        > newkey.json
 
-##### Reformat
+    ##### Reformat
 
-## Extract the key from JSON to a single-line PEM
-cat newkey.json | python -c 'import sys,json;j=sys.stdin.read();print(json.loads(j))["result"]["private_key"]' > key.pem.oneline
+    ## Extract the key from JSON to a single-line PEM
+    cat newkey.json | python -c 'import sys,json;j=sys.stdin.read();print(json.loads(j))["result"]["private_key"]' > key.pem.oneline
 
-## Convert the single-line PEM to a PEM file (may or may not be necessary)
-cat key.pem.oneline | sed 's:\\n:\n:g' > ${CANONICAL_NAME}.key
+    ## Convert the single-line PEM to a PEM file (may or may not be necessary)
+    cat key.pem.oneline | sed 's:\\n:\n:g' > ${CANONICAL_NAME}.key
 
-## Extract the CSR into a new JSON
-cat newkey.json | python -c 'import sys,json;j=sys.stdin.read();f=json.loads(j);csr={"certificate_request":f["result"]["certificate_request"]};print(json.dumps(csr))' > ${CANONICAL_NAME}.csr.json
+    ## Extract the CSR into a new JSON
+    cat newkey.json | python -c 'import sys,json;j=sys.stdin.read();f=json.loads(j);csr={"certificate_request":f["result"]["certificate_request"]};print(json.dumps(csr))' > ${CANONICAL_NAME}.csr.json
 
-## Optionally, save the CSR in PEM format
-## cat certificate_request.pem.oneline | sed 's:\\n:\n:g' > ${HOSTNAME}.csr.pem
+    ## Optionally, save the CSR in PEM format
+    ## cat certificate_request.pem.oneline | sed 's:\\n:\n:g' > ${HOSTNAME}.csr.pem
 
-## Clean up
-rm key_request.json
-rm newkey.json
-rm key.pem.oneline
-```
+    ## Clean up
+    rm key_request.json
+    rm newkey.json
+    rm key.pem.oneline
+    ```
 
 
 3. POST the CSR back to the API (`sign` endpoint) get the actual certificate
 
-```bash
-curl -k https://${MASTER_IP}/ca/api/v2/sign \
-    -X POST \
-    -H 'content-type:application/json'  \
-    -d @${CANONICAL_NAME}.csr.json \
-    -H "Authorization: token=$(cat token)" \
-    > certificate.json
+    ```bash
+    curl -k https://${MASTER_IP}/ca/api/v2/sign \
+        -X POST \
+        -H 'content-type:application/json'  \
+        -d @${CANONICAL_NAME}.csr.json \
+        -H "Authorization: token=$(cat token)" \
+        > certificate.json
 
-# Reformat json to PEM file (.crt)
-cat certificate.json | python -c 'import sys,json;j=sys.stdin.read();print(json.loads(j))["result"]["certificate"]' > ${CANONICAL_NAME}.crt
+    # Reformat json to PEM file (.crt)
+    cat certificate.json | python -c 'import sys,json;j=sys.stdin.read();print(json.loads(j))["result"]["certificate"]' > ${CANONICAL_NAME}.crt
 
-# Clean up
-rm certificate.json
-rm ${CANONICAL_NAME}.csr.json
-```
+    # Clean up
+    rm certificate.json
+    rm ${CANONICAL_NAME}.csr.json
+    ```
 
 4. Remove your token
-```bash
-rm token
-```
+
+    ```bash
+    rm token
+    ```
 
 Okay, so all of the above is sorta useful cause DC/OS can be used to sign certificates, which can be used in general by random servers, if you've configured your clients to trust the DC/OS CA.
 
