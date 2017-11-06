@@ -1,5 +1,7 @@
 # Summary
 
+Really, all of this is perpetually WIP.  Send comments to jlee@mesosphere.com.
+
 * [Introduction](README.md)
 * Walkthroughs
     * [Simple Single-Master DC/OS Installation Walkthrough](walkthroughs/single-master-setup.md)
