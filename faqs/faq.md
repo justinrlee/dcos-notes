@@ -54,11 +54,13 @@ sudo rm /var/lib/mesos/slave/meta/slaves/latest
 2) Stop the agent service:
 
   For private agents:
+  
   ```
   sudo sh -c 'systemctl kill -s SIGUSR1 dcos-mesos-slave && systemctl stop dcos-mesos-slave'
   ```
 
   For public agents:
+
   ```
   ⁠⁠⁠⁠sudo sh -c 'systemctl kill -s SIGUSR1 dcos-mesos-slave-public && systemctl stop dcos-mesos-slave-public'
   ```
@@ -73,11 +75,13 @@ sudo rm /var/lib/mesos/slave/meta/slaves/latest
 4) Start the agent back up:
 
 For private agents:
+
 ```
 systemctl start dcos-mesos-slave
 ```
 
 For public agents:
+
 ```
 systemctl start dcos-mesos-slave-public
 ```
