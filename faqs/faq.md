@@ -22,28 +22,28 @@ Alternately, you can do this on a per-node basis by:
 
 2) Add a line with the MESOS_ATTRIBUTES environment variable (this will be read by the dcos-mesos-slave or dcos-mesos-slave-public systemd unit):
 
-    ```
-    MESOS_ATTRIBUTES=location:bare_metal;disk_type:ssd
-    ```
+```
+MESOS_ATTRIBUTES=location:bare_metal;disk_type:ssd
+```
 
-    (You can specify additional attributes by separating by semicolons)
+(You can specify additional attributes by separating by semicolons)
 
 3) Remove the old slave metadata and restart the dcos-mesos-slave (or dcos-mesos-slave-public) service:
 
-    ```
-    # Replace dcos-mesos-slave with dcos-mesos-slave-public for public agents:
-    sudo systemctl stop dcos-mesos-slave
-    sudo rm /var/lib/dcos/mesos-resources
-    sudo rm /var/lib/mesos/slave/meta/slaves/latest
-    # Replace dcos-mesos-slave with dcos-mesos-slave-public for public agents:
-    sudo systemctl start dcos-mesos-slave
-    ```
+```
+# Replace dcos-mesos-slave with dcos-mesos-slave-public for public agents:
+sudo systemctl stop dcos-mesos-slave
+sudo rm /var/lib/dcos/mesos-resources
+sudo rm /var/lib/mesos/slave/meta/slaves/latest
+# Replace dcos-mesos-slave with dcos-mesos-slave-public for public agents:
+sudo systemctl start dcos-mesos-slave
+```
 
 4) Most likely required: if the service doesn't come up, remove `/var/lib/mesos/slave/meta/slaves/latest`:
 
-    ```bash
-    sudo rm /var/lib/mesos/slave/meta/slaves/latest
-    ```
+```bash
+sudo rm /var/lib/mesos/slave/meta/slaves/latest
+```
 
 ## How do I change the resources for a DC/OS node?
 
@@ -53,34 +53,34 @@ Alternately, you can do this on a per-node basis by:
 
 2) Stop the agent service:
 
-    For private agents:
-    ```
-    sudo sh -c 'systemctl kill -s SIGUSR1 dcos-mesos-slave && systemctl stop dcos-mesos-slave'
-    ```
+  For private agents:
+  ```
+  sudo sh -c 'systemctl kill -s SIGUSR1 dcos-mesos-slave && systemctl stop dcos-mesos-slave'
+  ```
 
-    For public agents:
-    ```
-    ⁠⁠⁠⁠sudo sh -c 'systemctl kill -s SIGUSR1 dcos-mesos-slave-public && systemctl stop dcos-mesos-slave-public'
-    ```
+  For public agents:
+  ```
+  ⁠⁠⁠⁠sudo sh -c 'systemctl kill -s SIGUSR1 dcos-mesos-slave-public && systemctl stop dcos-mesos-slave-public'
+  ```
 
 3) Remove the metadata and mesos resources files (these will be re-generated on agent start):
 
-    ```
-    sudo rm /var/lib/dcos/mesos-resources
-    sudo rm /var/lib/mesos/slave/meta/slaves/latest
-    ```
+```
+sudo rm /var/lib/dcos/mesos-resources
+sudo rm /var/lib/mesos/slave/meta/slaves/latest
+```
 
 4) Start the agent back up:
 
-    For private agents:
-    ```
-    systemctl start dcos-mesos-slave
-    ```
+For private agents:
+```
+systemctl start dcos-mesos-slave
+```
 
-    For public agents:
-    ```
-    systemctl start dcos-mesos-slave-public
-    ```
+For public agents:
+```
+systemctl start dcos-mesos-slave-public
+```
 
 ## How do I determine what version of DC/OS a specific node is on?
 
