@@ -14,6 +14,7 @@ Really, all of this is perpetually WIP.  Send comments to jlee@mesosphere.com.
     * [Frequently Asked Questions](faqs/faq.md)
     * [CPU/Memory Allocation and Utilization Guide](faqs/utilization.md)
     * [Framework Cleanup](faqs/cleanup.md)
+    * [DC/OS EE Authentication API](faqs/authentication.md)
     * [DC/OS Certificates for Dummies](faqs/certificates-for-dummies.md)
 
 * Spark Stuff
