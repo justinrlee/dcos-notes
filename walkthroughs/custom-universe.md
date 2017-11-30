@@ -2,6 +2,10 @@
 
 This document describes how to build a Custom Universe (or Catalog) for DC/OS.  This is distinct from a DC/OS Local Universe.
 
+High Level difference between the two:
+* Local Universe allows you to access packages from the online Mesosphere Universe from a DC/OS cluster that doesn't have Internet access.  It re-hosts all artifacts as necessary.
+* Custom Universe allows you to add custom packages to a DC/OS cluster.  It does not host any artifacts, and assumes they are reachable from your DC/OS cluster.
+
 ## Context: Universe
 
 The Mesosphere "Universe" (a.k.a. Catalog in DC/OS 1.10+) acts basically as an app store for DC/OS.  
