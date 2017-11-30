@@ -6,6 +6,7 @@ Really, all of this is perpetually WIP.  Send comments to jlee@mesosphere.com.
 * Walkthroughs
     * [Simple Single-Master DC/OS Installation Walkthrough](walkthroughs/single-master-setup.md)
     * [Simple Multi-Master DC/OS Installation Walkthrough](walkthroughs/multi-master-setup.md)
+    * [DC/OS Custom Universe](walkthroughs/custom-universe.md)
 
 * Troubleshooting
     * [Installation FAQ](troubleshooting/installation-faq.md)
