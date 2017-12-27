@@ -187,3 +187,10 @@ If you have a batch job that requires the use of capabilities that are missing f
 5. Click on "Review and Run" and then "Run Service"
 
 The service will start.  You should be able to navigate to test > process-users, and look at the actual task that is running.  If you look in the files or logs tabs, you should be able to see what's actually going on.
+
+## More
+This document was meant to give a high-level overview of this process.  Using this as a basis, here are some of the additional things you could do:
+* Use other public or custom images (such as TensorFlow or custom images with credentials baked in)
+* Tweak cpu/memory settings to run larger or faster jobs
+* Use DC/OS secrets to store credentials
+* Launch other jobs from within the cluster (using spark cluster mode)
