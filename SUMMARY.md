@@ -17,6 +17,7 @@ Really, all of this is perpetually WIP.  Send comments to jlee@mesosphere.com.
     * [Framework Cleanup](faqs/cleanup.md)
     * [DC/OS EE Authentication API](faqs/authentication.md)
     * [DC/OS Certificates for Dummies](faqs/certificates-for-dummies.md)
+    * [Simple Python Batch Jobs](faqs/simple-python-batch-jobs.md)
 
 * Spark Stuff
     * [Spark Notes](spark/spark.md)
