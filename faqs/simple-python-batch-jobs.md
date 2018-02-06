@@ -2,9 +2,9 @@
 
 This document describes three different ways to run simple python batch jobs on a DC/OS cluster.  This is non-complete and is meant more as a simple introduction.  These are the mechanisms demonstrated:
 
-* Using DC/OS's "Jobs" service (also known as Minuteman)
+* Using DC/OS's "Jobs" service (also known as Metronome)
 * Using persistent container run in Marathon, by `exec`-ing into the container ('jump container')
-* Using DC/OS's "Services" service (also known as Marathon, for long-running services, or anything that requires a capability available in Marathon but not in Minuteman)
+* Using DC/OS's "Services" service (also known as Marathon, for long-running services, or anything that requires a capability available in Marathon but not in Metronome)
 
 These examples all use the Docker `python:3.6` image.  Custom python images with additional Python packages could also be used.  Specifically, if you had requirements to read/write from HDFS or S3, configurations for these could be baked into a Docker image.
 
@@ -81,12 +81,12 @@ if r.status_code == 200:
             data=json.dumps({"processed": "yes"}))
 ```
 
-## Running jobs through the "Minuteman" jobs processing service
-Now that we have a Docker image and a python batch script we would like to run, we can run it through the DC/OS "Jobs" service, which is also known as Minuteman.
+## Running jobs through the "Metronome" jobs processing service
+Now that we have a Docker image and a python batch script we would like to run, we can run it through the DC/OS "Jobs" service, which is also known as Metronome.
 
 In DC/OS, a 'job' is some process that generally runs and then completes.
 
-**Minuteman jobs can be specified either through the UI or through the 'JSON MODE' json editor in the UI.  The UI does not have all available fields, so we're directly specifying properties through the JSON editor, although if you switch back out of the JSON editor when you're done you can see that fields get populated in both areas**
+**Metronome jobs can be specified either through the UI or through the 'JSON MODE' json editor in the UI.  The UI does not have all available fields, so we're directly specifying properties through the JSON editor, although if you switch back out of the JSON editor when you're done you can see that fields get populated in both areas**
 
 1. From the DC/OS UI, click on "Jobs" to get to the Metronome jobs page
 2. Click on the `+` sign in the top right corner.
