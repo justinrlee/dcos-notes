@@ -1,6 +1,7 @@
 # DC/OS CPU/Memory Allocation and Utilization
 
 CPU Behavior
+
 | DC/OS Version | Mesos Containerizer Default Behavior | Docker Default Behavior |
 | ---------------| ------------------------------------ | ----------------------- |
 | 1.9 | Hard Limit | Soft Limit |
