@@ -28,7 +28,7 @@ This will result in the following configuration:
 
 | DC/OS Version | Mesos Containerizer Default Behavior | Docker Default Behavior |
 | ---------------| ------------------------------------ | ----------------------- |
-| 1.10 | Hard CPU Limit | Hard CPU Limit |
+| 1.10 (Modified) | Soft CPU Limit | Soft CPU Limit |
 
 ***
 
