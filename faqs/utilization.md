@@ -1,11 +1,28 @@
 # DC/OS CPU/Memory Allocation and Utilization
 
-CPU Behavior
+## CPU Behavior
+
+Between 1.9 and 1.10, Mesosphere changed the default behavior for containers run with the Docker runtime.  Specifically, in 1.10, containers run with the Docker runtime now respect the `MESOS_CGROUPS_ENABLE_CFS` flag, which defaults to true.  This means that by default in `1.10.x` and above, containers run with the Docker containerizer will be hard limited to their specified allocation.
 
 | DC/OS Version | Mesos Containerizer Default Behavior | Docker Default Behavior |
 | ---------------| ------------------------------------ | ----------------------- |
-| 1.9 | Hard Limit | Soft Limit |
-| 1.10 | Hard Limit | Hard Limit |
+| 1.9 | Hard CPU Limit | Soft CPU Limit |
+| 1.10 | Hard CPU Limit | Hard CPU Limit |
+
+* Hard CPU Limit: Containers will be prevented from using more CPU than specified in their allocation.
+* Soft CPU Limit: Containers will be allowed to use more CPU than specified in their allocation.
+
+### Changing CPU limits in 1.10
+In 1.10 and above, in order to revert to soft limits, you can do the following:
+
+* Create and/or edit the `/var/lib/dcos/mesos-slave-common` file on an agent
+* Add this line: 
+```
+MESOS_CGROUPS_ENABLE_CFS=false
+```
+* Restart the Mesos slave.  This will not result in a new Mesos agent ID.
+
+*This will apply to both the Docker containerizer and the Mesos containerizer*
 
 ***
 
@@ -208,7 +225,7 @@ Then the service will be throttled to 0.101 cpu cycles equivalent to 0.101 CPUs.
 
 Note that this shows up in the Mesos UI and by monitoring the process, but does not show up in the DC/OS UI or in the Mesos state.json.  As noted above, the 0.001 cpus will also be used for placement (not 0.101).
 
-## Mesos Containerizer / UCR Alternate Behavior (Configure to soft CPU limits)
+## 1.9 Mesos Containerizer / UCR Alternate Behavior (Configure to soft CPU limits)
 If you desire the soft limit behavior (limit only under contention) in Mesos Containerizer / UCR, you can make the following change on a per-slave basis:
 
 Add this line to /run/dcos/etc/mesos-slave, /run/dcos/etc/mesos-slave-common, or /var/lib/dcos/mesos-slave-common:
@@ -223,7 +240,7 @@ sudo rm -f /var/lib/mesos/slave/meta/slaves/latest
 systemctl start dcos-mesos-slave)
 ```
 
-## Mesos Containerizer / UCR Memory Behavior (allow swap)
+## 1.9 Mesos Containerizer / UCR Memory Alternate Behavior (allow swap)
 By default, the Mesos containerizer will allow the container to swap past the specified memory limit.  If you desire to change this behavior, you can explicitly disable swap with this flag:
 
 > MESOS_CGROUPS_LIMIT_SWAP=true
