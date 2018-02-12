@@ -24,6 +24,12 @@ MESOS_CGROUPS_ENABLE_CFS=false
 
 *This will apply to both the Docker containerizer and the Mesos containerizer*
 
+This will result in the following configuration:
+
+| DC/OS Version | Mesos Containerizer Default Behavior | Docker Default Behavior |
+| ---------------| ------------------------------------ | ----------------------- |
+| 1.10 | Hard CPU Limit | Hard CPU Limit |
+
 ***
 
 For the purposes of testing load, some variant of this cmomand will be used (this one loads four full cores).
