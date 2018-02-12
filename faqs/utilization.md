@@ -34,6 +34,8 @@ for i in 1 2 3 4; do yes > /dev/null & done; tail -f /dev/null;
 
 ***
 
+The rest of this document refers to DC/OS versions prior to 1.10.
+
 # DC/OS Container Runtimes
 
 DC/OS supports two primary 'container runtimes':
