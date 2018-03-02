@@ -164,3 +164,15 @@ systemctl restart dcos-mesos-slave
 ```
 
 (Source: http://mesos.apache.org/documentation/latest/configuration/)
+
+
+## Why is `beam.smp` is using all my CPU?
+
+Take a look at https://jira.mesosphere.com/browse/DCOS_OSS-2109
+
+Try configuring your system kernel to not use 62053 for ephemeral ports (conflicts with Navstar):
+
+```
+echo "net.ipv4.ip_local_port_range = 32768    60999" >> /etc/sysctl.conf
+sysctl -p /etc/sysctl.conf
+```
